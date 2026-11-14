@@ -17,6 +17,8 @@ Token_Kind :: enum {
 	Modulo_Equal,
 	Equal,
 	Equal_Equal,
+	Bang,
+	Bang_Equal,
 	Semicolon,
 	LParen,
 	RParen,

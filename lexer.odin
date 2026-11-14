@@ -76,6 +76,8 @@ get_operator_equal :: proc(tokk: Token_Kind) -> Token_Kind {
 		return .Divide_Equal 
 	case tokk == .Modulo:
 		return .Modulo_Equal 
+	case tokk == .Bang:
+		return .Bang_Equal
 	case:
 		return .Unknown_Tok
 	}
@@ -138,8 +140,7 @@ advance :: proc(lex: ^Lexer){
 //should only be called when scanning for 'operator=' patterns
 scan_op_equal :: proc(lex: ^Lexer, tokk: Token_Kind) -> bool{
 	if lex.pos < lex.len && peek(lex) == '='{
-		advance(lex)
-		emit_token(lex, get_operator_equal(tokk))
+		advance_and_emit_token(lex, get_operator_equal(tokk))
 		return true
 	}
 	return false
@@ -152,8 +153,7 @@ scan_plus :: proc(lex: ^Lexer){
 			return
 		}
 		if peek(lex) == '+' {
-			advance(lex)
-			emit_token(lex, .Plus_Plus)
+			advance_and_emit_token(lex, .Plus)
 			return
 		}
 	} else {
@@ -162,15 +162,50 @@ scan_plus :: proc(lex: ^Lexer){
 	
 }
 
+advance_and_emit_token :: proc(lex: ^Lexer, tokk: Token_Kind){
+	advance_first(lex)
+	emit_token(lex, tokk)
+}
+
 scan_equals :: proc(lex: ^Lexer){
 	advance_first(lex)
-	if lex.pos < lex.len && peek(lex) == '='{
-		advance(lex)	
-		emit_token(lex, .Equal_Equal)
+	if scan_op_equal(lex, .Equal) {
 		return
-	}
-	else {
+	}else {
 		emit_token(lex, .Equal)
+	}
+}
+
+scan_punctuator:: proc(lex: ^Lexer){
+	switch peek(lex){
+	case '=':
+		scan_equals(lex)
+	case '!':
+		scan_bang(lex)
+	case '+':
+		scan_plus(lex)
+	case '-':
+		scan_minus(lex)
+	case '*':
+		scan_star(lex)
+	case '/':
+		scan_divide(lex)
+	case '%':
+		scan_modulo(lex)
+	case ';':
+		advance_and_emit_token(lex, .Semicolon)
+	case '{':
+		advance_and_emit_token(lex, .LCurly)
+	case '}':
+		advance_and_emit_token(lex, .RCurly)
+	case '[':
+		advance_and_emit_token(lex, .LSquareBracket)
+	case ']':
+		advance_and_emit_token(lex, .RSquareBracket)
+	case '(':
+		advance_and_emit_token(lex, .LParen)
+	case ')':
+		advance_and_emit_token(lex, .RParen)
 	}
 }
 
@@ -184,7 +219,7 @@ scan_number :: proc(lex: ^Lexer){
 		case is_whitespace(ch):
 			emit_token(lex, .Integer)
 			return
-		case is_punctuation(ch):
+		case is_punctuator(ch):
 			emit_token(lex, .Integer)
 			return
 		case is_ident_start(ch):
@@ -208,9 +243,12 @@ peek :: proc(lex: ^Lexer) -> u8 {
 	return lex.source[lex.pos]
 }
 
-is_punctuation :: proc(c: u8) -> bool {
-	return c == ';' || c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || 
-		   c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']'
+is_punctuator :: proc(c: u8) -> bool {
+	switch c {
+	case '=', '!', '+', '-', '*', '/', '%', ';', '{', '}', '[', ']', '(', ')', '>', '<', '|', '&', ',', '.':
+		return true
+	}
+	return false
 }
 
 is_whitespace :: proc(c: u8) -> bool {
@@ -242,25 +280,8 @@ lexical_analysis :: proc(lex: ^Lexer) {
 			scan_number(lex)
 		case is_alpha(ch):
 		case is_ident_start(ch):
-		case is_ident_continue(ch):
-		case ch == '(':
-			advance_first(lex)
-			emit_token(lex,.LParen)
-		case ch == ')':
-			advance_first(lex)
-			emit_token(lex,.RParen)
-		case ch == '+':
-			scan_plus(lex)
-		case ch == '-':
-			scan_minus(lex)
-		case ch == '/':
-			scan_slash(lex)
-		case ch == '*':
-			scan_star(lex)
-		case ch == '%':
-			scan_modulo(lex)
-		case ch == '=':
-			scan_equals(lex)
+		case is_punctuator(ch):
+			scan_punctuator(lex)
 		case is_whitespace(ch):
 			advance(lex)
 		}
