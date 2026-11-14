@@ -64,6 +64,23 @@ get_err_msg :: proc(errk: Lexer_Error_Kind) -> string {
 	return "Unknown Error Type (This should not happen)"
 }
 
+get_operator_equal :: proc(tokk: Token_Kind) -> Token_Kind {
+	switch {
+	case tokk == .Plus:
+		return .Plus_Equal 
+	case tokk == .Minus:
+		return .Minus_Equal 
+	case tokk == .Star:
+		return .Star_Equal 
+	case tokk == .Divide:
+		return .Divide_Equal 
+	case tokk == .Modulo:
+		return .Modulo_Equal 
+	case:
+		return .Unknown_Tok
+	}
+}
+
 //maybe an error, need to check if the append can fail
 emit_token :: proc(lex: ^Lexer, tokk: Token_Kind){
 	append(&lex.toks,
@@ -116,6 +133,33 @@ advance :: proc(lex: ^Lexer){
 	} else {
 		lex.col += 1
 	}
+}
+
+//should only be called when scanning for 'operator=' patterns
+scan_op_equal :: proc(lex: ^Lexer, tokk: Token_Kind) -> bool{
+	if lex.pos < lex.len && peek(lex) == '='{
+		advance(lex)
+		emit_token(lex, get_operator_equal(tokk))
+		return true
+	}
+	return false
+}
+
+scan_plus :: proc(lex: ^Lexer){
+	advance_first(lex)
+	if lex.pos < lex.len {
+		if scan_op_equal(lex, .Plus){
+			return
+		}
+		if peek(lex) == '+' {
+			advance(lex)
+			emit_token(lex, .Plus_Plus)
+			return
+		}
+	} else {
+		emit_token(lex, .Plus)
+	}
+	
 }
 
 scan_equals :: proc(lex: ^Lexer){
@@ -206,10 +250,15 @@ lexical_analysis :: proc(lex: ^Lexer) {
 			advance_first(lex)
 			emit_token(lex,.RParen)
 		case ch == '+':
+			scan_plus(lex)
 		case ch == '-':
+			scan_minus(lex)
 		case ch == '/':
+			scan_slash(lex)
 		case ch == '*':
+			scan_star(lex)
 		case ch == '%':
+			scan_modulo(lex)
 		case ch == '=':
 			scan_equals(lex)
 		case is_whitespace(ch):

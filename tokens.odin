@@ -23,6 +23,7 @@ Token_Kind :: enum {
 	Keyword_int,
 	Keyword_return,
 	EOF,
+	Unknown_Tok,
 }
 
 Token :: struct {
