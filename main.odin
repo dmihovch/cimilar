@@ -3,6 +3,8 @@ package main
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import lex "lexer" 
+import tok "tokens"
 
 run :: proc() -> int {
 	num_args := len(os.args)
@@ -28,18 +30,18 @@ run :: proc() -> int {
 
 	fmt.println(file_str)
 
-	toks: [dynamic]Token
+	toks: [dynamic]tok.Token
 	defer delete(toks)
-	lexer_errors: [dynamic]Lexer_Error
+	lexer_errors: [dynamic]lex.Lexer_Error
 	defer delete(lexer_errors)
 
-	lexer := init_lexer(file_str, len(file_str))
+	lexer := lex.init_lexer(file_str, len(file_str))
 	lexer.toks = toks
 	lexer.errs = lexer_errors
-	lexical_analysis(&lexer)
+	lex.lexical_analysis(&lexer)
 
-	print_tokens(&lexer)
-	print_lex_errors(&lexer)
+	lex.print_tokens(&lexer)
+	lex.print_lex_errors(&lexer)
 
 	//report errors and exit or hand off to parser
 

@@ -1,4 +1,4 @@
-package main 
+package tokens
 
 //TODO need to organize the tokens for my own sanity...
 Token_Kind :: enum {
@@ -53,6 +53,7 @@ Token_Kind :: enum {
 	Keyword_int,
 	Keyword_return,
 	EOF,
+	Invalid,
 	Unknown_Tok,
 }
 
