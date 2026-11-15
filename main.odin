@@ -18,17 +18,11 @@ run :: proc() -> int {
 		return 2
 	}
 
-	file, err := os.open(os.args[1])
-	if err != nil {
-		fmt.eprintln("file: ", os.args[1], " cannot be found or cannot be opened")
-		return 3
-	}
-	defer os.close(file)
 	
-	file_str: string
-	file_str, err = read_file_to_string(file)
+	file_str, err := read_file_to_string(os.args[1])
 	if err != nil {
-		return 4
+		fmt.eprintln("Error opening & reading file at path: ", os.args[1], " error msg: ", err)
+		return 3
 	}
 	defer delete(file_str)
 
@@ -52,8 +46,8 @@ run :: proc() -> int {
 	return 0
 }
 
-read_file_to_string :: proc(f: ^os.File) -> (string, os.Error) {
-	data, err := os.read_entire_file(f, context.allocator)
+read_file_to_string :: proc(path: string) -> (string, os.Error) {
+	data, err := os.read_entire_file_from_path(path, context.allocator)
 	if err != nil {
 		return "", err 
 	}

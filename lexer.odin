@@ -5,6 +5,8 @@ import "core:fmt"
 Lexer_Error_Kind:: enum {
 	Invalid_Ident,
 	Invalid_Num,
+	Invalid_Punctuator,
+	Invalid_Character,
 	//and more
 }
 
@@ -57,28 +59,36 @@ init_lexer :: proc(source: string, len: int) -> Lexer {
 get_err_msg :: proc(errk: Lexer_Error_Kind) -> string {
 	switch errk {
 	case .Invalid_Ident:
-		return "Invalid Identifier:"
+		return "Invalid Identifier: "
 	case .Invalid_Num:
-		return "Invalid Number:"
+		return "Invalid Number: "
+	case .Invalid_Punctuator:
+		return "Invalid Punctuator: "
+	case .Invalid_Character:
+		return "Invalid Character: "
 	}
 	return "Unknown Error Type (This should not happen)"
 }
 
+//TODO ADD MORE
 get_operator_equal :: proc(tokk: Token_Kind) -> Token_Kind {
 	switch {
+	case tokk == .Equal:
+		return .Equal_Eq
 	case tokk == .Plus:
-		return .Plus_Equal 
+		return .Plus_Eq
 	case tokk == .Minus:
-		return .Minus_Equal 
+		return .Minus_Eq
 	case tokk == .Star:
-		return .Star_Equal 
+		return .Star_Eq
 	case tokk == .Divide:
-		return .Divide_Equal 
+		return .Divide_Eq
 	case tokk == .Modulo:
-		return .Modulo_Equal 
-	case tokk == .Bang:
-		return .Bang_Equal
+		return .Modulo_Eq
+	case tokk == .Logical_Not:
+		return .Logical_Not_Eq
 	case:
+		fmt.eprintln("In get_operator_equal, reached Unknown_Tok, something is badly wrong!")
 		return .Unknown_Tok
 	}
 }
@@ -140,31 +150,96 @@ advance :: proc(lex: ^Lexer){
 //should only be called when scanning for 'operator=' patterns
 scan_op_equal :: proc(lex: ^Lexer, tokk: Token_Kind) -> bool{
 	if lex.pos < lex.len && peek(lex) == '='{
-		advance_and_emit_token(lex, get_operator_equal(tokk))
+		advance(lex)
+		emit_token(lex, get_operator_equal(tokk))
 		return true
 	}
 	return false
 }
 
-scan_plus :: proc(lex: ^Lexer){
-	advance_first(lex)
+//need logical and, all bitwise
+scan_operator :: proc(lex: ^Lexer){
 	if lex.pos < lex.len {
-		if scan_op_equal(lex, .Plus){
-			return
+		ch:=peek(lex)
+		switch ch{
+		case '=':
+			advance_first(lex)
+			if scan_op_equal(lex, .Equal){
+				return
+			}
+			emit_token(lex, .Equal)
+		case '+':
+			advance_first(lex)
+			if scan_op_equal(lex, .Plus){
+				return
+			}
+			if lex.pos < lex.len && peek(lex) == '+'{
+				advance(lex)
+				emit_token(lex, .Plus_Plus)
+				return
+			}
+			emit_token(lex, .Plus)
+		case '-':
+			advance_first(lex)
+			if scan_op_equal(lex, .Minus){
+				return
+			}
+			if lex.pos < lex.len {
+				if peek(lex) == '-' {
+					advance(lex)
+					emit_token(lex, .Minus_Minus)
+					return
+				}
+				if peek(lex) == '>' {
+					advance(lex)
+					emit_token(lex, .Ptr_Member_Acc)
+					return
+				}
+			}
+			emit_token(lex, .Minus)
+		case '!':
+			advance_first(lex)
+			if scan_op_equal(lex, .Logical_Not){
+				return
+			}
+			emit_token(lex, .Logical_Not)
+		case '*':
+			advance_first(lex)
+			if scan_op_equal(lex, .Star){
+				return
+			}
+			emit_token(lex, .Star)
+		case '/':
+			advance_first(lex)
+			if scan_op_equal(lex, .Divide){
+				return
+			}
+			emit_token(lex, .Divide)
+		case '%':
+			advance_first(lex)
+			if scan_op_equal(lex, .Modulo){
+				return
+			}
+			emit_token(lex, .Modulo)
+		case '.':
+			advance_first(lex)
+			if lex.pos < lex.len {
+				if peek(lex) == '.' {
+					ch, ok := peek_n_ahead(lex, 1)
+					if ok && ch == '.'{
+						advance(lex)
+						advance(lex)
+						emit_token(lex, .Ellipsis)
+						return
+					}
+				}
+			}
+			emit_token(lex, .Member_Acc)
+		case:
+			advance(lex)
+			emit_error(lex, .Invalid_Punctuator, ch)
 		}
-		if peek(lex) == '+' {
-			advance_and_emit_token(lex, .Plus)
-			return
-		}
-	} else {
-		emit_token(lex, .Plus)
-	}
-	
-}
-
-advance_and_emit_token :: proc(lex: ^Lexer, tokk: Token_Kind){
-	advance_first(lex)
-	emit_token(lex, tokk)
+	}		
 }
 
 scan_equals :: proc(lex: ^Lexer){
@@ -177,36 +252,10 @@ scan_equals :: proc(lex: ^Lexer){
 }
 
 scan_punctuator:: proc(lex: ^Lexer){
-	switch peek(lex){
-	case '=':
-		scan_equals(lex)
-	case '!':
-		scan_bang(lex)
-	case '+':
-		scan_plus(lex)
-	case '-':
-		scan_minus(lex)
-	case '*':
-		scan_star(lex)
-	case '/':
-		scan_divide(lex)
-	case '%':
-		scan_modulo(lex)
-	case ';':
-		advance_and_emit_token(lex, .Semicolon)
-	case '{':
-		advance_and_emit_token(lex, .LCurly)
-	case '}':
-		advance_and_emit_token(lex, .RCurly)
-	case '[':
-		advance_and_emit_token(lex, .LSquareBracket)
-	case ']':
-		advance_and_emit_token(lex, .RSquareBracket)
-	case '(':
-		advance_and_emit_token(lex, .LParen)
-	case ')':
-		advance_and_emit_token(lex, .RParen)
+	if scan_single_char_punctuation(lex){
+		return
 	}
+	scan_operator(lex)
 }
 
 scan_number :: proc(lex: ^Lexer){
@@ -223,29 +272,83 @@ scan_number :: proc(lex: ^Lexer){
 			emit_token(lex, .Integer)
 			return
 		case is_ident_start(ch):
-			//TODO look for entire invalid thing
-			emit_error(lex, .Invalid_Num, 0)
+			scan_invalid_number(lex, .Invalid_Num, 0)
 			return
 		case:
-			emit_error(lex, .Invalid_Num, ch)
+			scan_invalid_number(lex, .Invalid_Num, ch)
 			return
 		}
-
-
 	}
+}
+
+scan_invalid_number:: proc(lex: ^Lexer, errk: Lexer_Error_Kind, invalid_ch: u8){
+	//TODO
+	for lex.pos < lex.len && is_ident_continue(peek(lex)){
+		advance(lex)
+	}
+	emit_error(lex, .Invalid_Num, invalid_ch)
 }
 
 scan_identifier :: proc(lex: ^Lexer){
 	//TODO
 }
 
-peek :: proc(lex: ^Lexer) -> u8 {
+peek_n_ahead :: proc(lex: ^Lexer, n_ahead: int) -> (u8, bool) {
+	if lex.pos + n_ahead < lex.len{
+		return lex.source[lex.pos + n_ahead], true
+	}
+	return 0, false
+}
+peek :: proc(lex: ^Lexer, n_ahead: int = 0) -> u8 {
 	return lex.source[lex.pos]
 }
 
 is_punctuator :: proc(c: u8) -> bool {
 	switch c {
 	case '=', '!', '+', '-', '*', '/', '%', ';', '{', '}', '[', ']', '(', ')', '>', '<', '|', '&', ',', '.':
+		return true
+	}
+	return false
+}
+
+//I am beginning to not like this...
+scan_single_char_punctuation :: proc(lex: ^Lexer) -> bool{
+	switch peek(lex){
+	case ';':
+		advance_first(lex)
+		emit_token(lex, .Semicolon)
+		return true
+	case '{':
+		advance_first(lex)
+		emit_token(lex, .LCurly)
+		return true
+	case '}':
+		advance_first(lex)
+		emit_token(lex, .RCurly)
+		return true
+	case '[':
+		advance_first(lex)
+		emit_token(lex, .LSquare)
+		return true
+	case ']':
+		advance_first(lex)
+		emit_token(lex, .RSquare)
+		return true
+	case '(':
+		advance_first(lex)
+		emit_token(lex, .LParen)
+		return true
+	case ')':
+		advance_first(lex)
+		emit_token(lex, .RParen)
+		return true
+	case ',':
+		advance_first(lex)
+		emit_token(lex, .Comma)
+		return true
+	case ':':
+		advance_first(lex)
+		emit_token(lex, .Colon)
 		return true
 	}
 	return false
@@ -284,6 +387,9 @@ lexical_analysis :: proc(lex: ^Lexer) {
 			scan_punctuator(lex)
 		case is_whitespace(ch):
 			advance(lex)
+		case:
+			advance_first(lex)
+			emit_error(lex, .Invalid_Character, ch)
 		}
 
 	}
