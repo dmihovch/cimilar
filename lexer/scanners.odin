@@ -119,8 +119,16 @@ scan_invalid_number:: proc(lex: ^Lexer){
 	}
 }
 
-scan_identifier :: proc(lex: ^Lexer){
-	//TODO
+scan_identifier :: proc(lex: ^Lexer) -> (toks.Token_Kind, Lexer_Error_Kind){
+	for is_ident_continue(peek(lex)){
+		advance(lex)
+	}
+	
+	if tokk, found := get_keyword(get_lexeme(lex)); found {
+		return tokk, .None
+	}
+
+	return .Identifier, .None
 }
 
 

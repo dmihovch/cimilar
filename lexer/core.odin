@@ -58,6 +58,7 @@ lexical_analysis :: proc(lex: ^Lexer) {
 			emit_token_or_error(lex, scan_number(lex))
 		case is_ident_start(ch):
 			set_first_advance(lex)
+			emit_token_or_error(lex, scan_identifier(lex))
 		case is_punctuator(ch):
 			set_first_advance(lex)	
 			emit_token_or_error(lex, scan_punctuator(lex, ch), .None)

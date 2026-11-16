@@ -32,6 +32,20 @@ is_ident_continue :: proc(c: u8, ok: bool) -> bool {
 	return ok && (is_ident_start(c) || is_digit(c))
 }
 
+get_lexeme :: proc(lex: ^Lexer) -> string {
+	return lex.source[lex.start:lex.pos]
+}
+
+get_keyword :: proc(lexeme: string) -> (toks.Token_Kind, bool) {
+	switch lexeme {
+	case "int":
+		return .Keyword_int, true
+	case "return":
+		return .Keyword_return, true
+	}
+	return .Invalid, false
+}
+
 
 get_err_msg :: proc(errk: Lexer_Error_Kind) -> string {
 	switch errk {
