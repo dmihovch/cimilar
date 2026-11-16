@@ -87,8 +87,8 @@ emit_token :: proc(lex: ^Lexer, tokk: toks.Token_Kind){
 		toks.Token{
 			kind = tokk,
 			value = lex.source[lex.start:lex.pos],
-			row = lex.row,
-			col = lex.col,
+			row = lex.start_row,
+			col = lex.start_col,
 		} 
 	)
 }
@@ -99,8 +99,8 @@ emit_error :: proc(lex: ^Lexer, errk: Lexer_Error_Kind){
 			kind = errk,
 			message = get_err_msg(errk),
 			value = lex.source[lex.start:lex.pos],
-			row = lex.row,
-			col = lex.col,
+			row = lex.start_row,
+			col = lex.start_col,
 		}
 	)
 }
@@ -114,6 +114,8 @@ peek :: proc(lex: ^Lexer, n_ahead: int = 0) -> (u8, bool) {
 
 set_first_advance :: proc(lex: ^Lexer){
 	lex.start = lex.pos
+	lex.start_row = lex.row
+	lex.start_col = lex.col
 	advance(lex)
 }
 
