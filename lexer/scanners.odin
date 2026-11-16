@@ -89,7 +89,6 @@ scan_punctuator:: proc(lex: ^Lexer, op: u8) -> toks.Token_Kind {
 	//checks first whether we just have a single character punctuator
 	tokk := get_single_char_punctuation(op)
 	if tokk != .Invalid {
-		//advance(lex)
 		return tokk 
 	} 
 	return scan_operator(lex, op)

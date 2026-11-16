@@ -117,6 +117,8 @@ get_single_char_punctuation :: proc(op: u8) -> toks.Token_Kind {
 		return .Comma
 	case ':':
 		return .Colon
+	case '~':
+		return .Bit_Not
 	}
 	return .Invalid
 }
