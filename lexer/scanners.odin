@@ -47,7 +47,7 @@ scan_operator :: proc(lex: ^Lexer, op: u8) -> toks.Token_Kind{
 				advance(lex)
 				return  candidate_assignment_variant
 			}
-			emit_token(lex, .Logical_Not)
+			return .Logical_Not
 		case '*':
 			candidate_assignment_variant := get_assignment_variant(op, next)
 			if candidate_assignment_variant != .Invalid {
@@ -81,7 +81,7 @@ scan_operator :: proc(lex: ^Lexer, op: u8) -> toks.Token_Kind{
 			return .Member_Acc
 		}		
 	}
-	fmt.eprintln("got to end of scan_operator switch, this shouldn't happen")
+	fmt.eprintfln("got to end of scan_operator switch, this shouldn't happen. op={:c}", op)
 	return .Invalid
 }
 

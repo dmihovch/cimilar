@@ -49,7 +49,7 @@ lexical_analysis :: proc(lex: ^Lexer) {
 	for {
 		ch, ok := peek(lex)
 		if !ok {
-			emit_token(lex, .EOF)	
+			return
 		}
 		tokk:=toks.Token_Kind.Invalid; errk:=Lexer_Error_Kind.None
 		switch {
@@ -65,14 +65,13 @@ lexical_analysis :: proc(lex: ^Lexer) {
 			advance(lex)
 		case:
 			set_first_advance(lex)
-			errk = .Invalid_Character
+			emit_token_or_error(lex, tokk, .Invalid_Character)
 		}
-		//emit_token_or_error(lex, tokk, errk)
+		//
 	}
 }
 
 emit_token_or_error :: proc(lex: ^Lexer, tokk: toks.Token_Kind, errk: Lexer_Error_Kind){
-	fmt.println("'",lex.source[lex.start:lex.pos],"'", tokk, errk)
 	assert((tokk == .Invalid) == (errk != .None))
 	if tokk != .Invalid {
 		emit_token(lex, tokk)
