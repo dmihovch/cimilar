@@ -3,6 +3,8 @@ package main
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import lex "lexer" 
+import tok "tokens"
 
 run :: proc() -> int {
 	num_args := len(os.args)
@@ -18,42 +20,36 @@ run :: proc() -> int {
 		return 2
 	}
 
-	file, err := os.open(os.args[1])
-	if err != nil {
-		fmt.eprintln("file: ", os.args[1], " cannot be found or cannot be opened")
-		return 3
-	}
-	defer os.close(file)
 	
-	file_str: string
-	file_str, err = read_file_to_string(file)
+	file_str, err := read_file_to_string(os.args[1])
 	if err != nil {
-		return 4
+		fmt.eprintln("Error opening & reading file at path: ", os.args[1], " error msg: ", err)
+		return 3
 	}
 	defer delete(file_str)
 
 	fmt.println(file_str)
 
-	toks: [dynamic]Token
+	toks: [dynamic]tok.Token
 	defer delete(toks)
-	lexer_errors: [dynamic]Lexer_Error
+	lexer_errors: [dynamic]lex.Lexer_Error
 	defer delete(lexer_errors)
 
-	lexer := init_lexer(file_str, len(file_str))
+	lexer := lex.init_lexer(file_str, len(file_str))
 	lexer.toks = toks
 	lexer.errs = lexer_errors
-	lexical_analysis(&lexer)
+	lex.lexical_analysis(&lexer)
 
-	print_tokens(&lexer)
-	print_lex_errors(&lexer)
+	lex.print_tokens(&lexer)
+	lex.print_lex_errors(&lexer)
 
 	//report errors and exit or hand off to parser
 
 	return 0
 }
 
-read_file_to_string :: proc(f: ^os.File) -> (string, os.Error) {
-	data, err := os.read_entire_file(f, context.allocator)
+read_file_to_string :: proc(path: string) -> (string, os.Error) {
+	data, err := os.read_entire_file_from_path(path, context.allocator)
 	if err != nil {
 		return "", err 
 	}
