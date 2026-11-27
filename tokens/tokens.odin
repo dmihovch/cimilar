@@ -52,6 +52,8 @@ Token_Kind :: enum {
 	RSquare,
 	Keyword_int,
 	Keyword_return,
+	Keyword_if,
+	Keyword_else,
 	EOF,
 	Invalid,
 	Unknown_Tok,

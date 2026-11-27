@@ -42,6 +42,10 @@ get_keyword :: proc(lexeme: string) -> (toks.Token_Kind, bool) {
 		return .Keyword_int, true
 	case "return":
 		return .Keyword_return, true
+	case "if":
+		return .Keyword_if, true
+	case "else":
+		return .Keyword_else, true
 	}
 	return .Invalid, false
 }

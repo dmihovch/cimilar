@@ -1,7 +1,6 @@
 package lexer 
 
 import toks "../tokens"
-import "core:fmt"
 
 Lexer_Error_Kind:: enum {
 	Invalid_Ident,
@@ -51,7 +50,8 @@ lexical_analysis :: proc(lex: ^Lexer) {
 		if !ok {
 			return
 		}
-		tokk:=toks.Token_Kind.Invalid; errk:=Lexer_Error_Kind.None
+		tokk:=toks.Token_Kind.Invalid
+		errk:=Lexer_Error_Kind.None
 		switch {
 		case is_digit(ch): 
 			set_first_advance(lex)
