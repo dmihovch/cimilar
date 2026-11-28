@@ -62,8 +62,8 @@ Token_Kind :: enum {
 Token :: struct {
 	kind: Token_Kind,
 	value: string,
-	row: int,
-	col: int,
+	row: u32,
+	col: u32,
 }
 
 

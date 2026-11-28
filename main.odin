@@ -35,7 +35,7 @@ run :: proc() -> int {
 	lexer_errors: [dynamic]lex.Lexer_Error
 	defer delete(lexer_errors)
 
-	lexer := lex.init_lexer(file_str, len(file_str))
+	lexer := lex.init_lexer(file_str, u32(len(file_str)))
 	lexer.toks = toks
 	lexer.errs = lexer_errors
 	lex.lexical_analysis(&lexer)

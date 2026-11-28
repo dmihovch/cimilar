@@ -15,26 +15,26 @@ Lexer_Error :: struct {
 	kind: Lexer_Error_Kind,
 	message: string,
 	value: string,
-	row: int,
-	col: int,
+	row: u32,
+	col: u32,
 }
 
 Lexer :: struct {
 	source: string,
-	pos: int,
-	len: int,
-	row: int,
-	col: int,
+	pos: u32,
+	len: u32,
+	row: u32,
+	col: u32,
 
-	start: int,
-	start_row:int,
-	start_col:int,
+	start: u32,
+	start_row: u32,
+	start_col: u32,
 
 	toks: [dynamic]toks.Token,
 	errs: [dynamic]Lexer_Error,
 }
 
-init_lexer :: proc(source: string, len: int) -> Lexer {
+init_lexer :: proc(source: string, len: u32) -> Lexer {
 	return Lexer{
 		source = source,
 		pos = 0,
@@ -106,7 +106,7 @@ emit_error :: proc(lex: ^Lexer, errk: Lexer_Error_Kind){
 	)
 }
 
-peek :: proc(lex: ^Lexer, n_ahead: int = 0) -> (u8, bool) {
+peek :: proc(lex: ^Lexer, n_ahead: u32 = 0) -> (u8, bool) {
 	if lex.pos + n_ahead < lex.len{
 		return lex.source[lex.pos + n_ahead], true
 	}
